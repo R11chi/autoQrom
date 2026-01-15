@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "cirq>=0.5.556",
     "matplotlib>=3.10.8",
     "numpy>=2.4.1",
     "pennylane>=0.43.2",
