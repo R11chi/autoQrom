@@ -9,12 +9,19 @@ def generate_qrom_circuit(bitstrings):
     num_of_elements = len(bitstrings)
     num_target_qubits = len(bitstrings[0]) 
 
+    print(f"Number of elements: {num_of_elements}")
+
     # Makes sure all bitstrings are of the same length
     for bs in bitstrings:
         if len(bs) != num_target_qubits:
             raise ValueError("All bitstrings must be of the same length.")
-        
-    num_ctrl_qubits =  math.ceil(math.log(num_of_elements, 2))
+
+    if num_of_elements == 1:
+        num_ctrl_qubits = 1
+    else:    
+        num_ctrl_qubits =  math.ceil(math.log(num_of_elements, 2))
+
+    print(f"Number of control qubits: {num_ctrl_qubits}")
 
 
     ctrl_reg = cirq.LineQubit.range(num_ctrl_qubits)  # Control qubits
@@ -36,9 +43,15 @@ def generate_qrom_circuit(bitstrings):
 
         #Setting target bits
         for target_i, target_bit in enumerate(bitstring):
-            if target_bit == "1":
+            if target_bit == "X":
                 part_circuit.append(cirq.X(trgt_reg[target_i]).controlled_by(*ctrl_reg))
-        
+            if target_bit == "Y":
+                part_circuit.append(cirq.Y(trgt_reg[target_i]).controlled_by(*ctrl_reg))
+            if target_bit == "Z":
+                part_circuit.append(cirq.Z(trgt_reg[target_i]).controlled_by(*ctrl_reg))
+            if target_bit == "I":
+                part_circuit.append(cirq.I(trgt_reg[target_i]).controlled_by(*ctrl_reg))  # Identity gate, do nothing
+
         #Removing anti-controls
         for i, bit in enumerate(i_in_binary):
             if bit == "0":
@@ -51,7 +64,7 @@ def generate_qrom_circuit(bitstrings):
 
 
 if __name__ == "__main__":
-    user_input = input("Enter bitstrings separated by commas: ").strip()
+    user_input = input("Enter Pauli strings (X, Y, Z, I)^* separated by commas: ").strip()
     bitstrings = [bs.strip() for bs in user_input.split(",") if bs.strip()]
     qrom_circuit = generate_qrom_circuit(bitstrings)
     print("Generated QROM Circuit:")
