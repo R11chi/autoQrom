@@ -5,6 +5,13 @@ import cirq
 import math
 
 
+gates = {
+    "X": cirq.X,
+    "Y": cirq.Y,
+    "Z": cirq.Z,
+    "I": cirq.I,
+}
+
 def generate_qrom_circuit(bitstrings):
     num_of_elements = len(bitstrings)
     num_target_qubits = len(bitstrings[0]) 
@@ -43,15 +50,11 @@ def generate_qrom_circuit(bitstrings):
 
         #Setting target bits
         for target_i, target_bit in enumerate(bitstring):
-            if target_bit == "X":
-                part_circuit.append(cirq.X(trgt_reg[target_i]).controlled_by(*ctrl_reg))
-            if target_bit == "Y":
-                part_circuit.append(cirq.Y(trgt_reg[target_i]).controlled_by(*ctrl_reg))
-            if target_bit == "Z":
-                part_circuit.append(cirq.Z(trgt_reg[target_i]).controlled_by(*ctrl_reg))
-            if target_bit == "I":
-                part_circuit.append(cirq.I(trgt_reg[target_i]).controlled_by(*ctrl_reg))  # Identity gate, do nothing
-
+                if target_bit in gates:
+                    part_circuit.append(gates[target_bit](trgt_reg[target_i]).controlled_by(*ctrl_reg))
+                else:
+                    raise ValueError(f"Invalid Pauli operator: {target_bit}")
+                
         #Removing anti-controls
         for i, bit in enumerate(i_in_binary):
             if bit == "0":
