@@ -3,6 +3,7 @@
 # Give the program a list of bit strings and it will output a QROM circuit from it. 
 import cirq
 import math
+import numpy as np
 
 
 gates = {
@@ -30,11 +31,8 @@ def generate_qrom_circuit(bitstrings):
 
     print(f"Number of control qubits: {num_ctrl_qubits}")
 
-
-    ctrl_reg = cirq.LineQubit.range(num_ctrl_qubits)  # Control qubits
-    trgt_reg = cirq.LineQubit.range(num_ctrl_qubits, num_ctrl_qubits + num_target_qubits)  # Target qubits
-
-
+    ctrl_reg = cirq.NamedQubit.range(num_ctrl_qubits, prefix="ctrl ")
+    trgt_reg = cirq.NamedQubit.range(num_target_qubits, prefix="trgt ")
     
     circuit = cirq.Circuit()
 
@@ -64,6 +62,7 @@ def generate_qrom_circuit(bitstrings):
 
 
     return circuit
+
 
 
 if __name__ == "__main__":
