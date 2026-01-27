@@ -13,24 +13,16 @@ def tensor_product(matrices):
     return result
 
 
-
-gates = {
-    "X": cirq.X,
-    "Y": cirq.Y,
-    "Z": cirq.Z,
-    "I": cirq.I,
-}
-
-def generate_qrom_circuit(bitstrings):
-    num_of_elements = len(bitstrings)
-    num_target_qubits = len(bitstrings[0]) 
+def generate_qrom_circuit(matrices):
+    num_of_elements = len(matrices)
+    num_target_qubits = len(matrices[0]) 
 
     print(f"Number of elements: {num_of_elements}")
 
-    # Makes sure all bitstrings are of the same length
-    for bs in bitstrings:
-        if len(bs) != num_target_qubits:
-            raise ValueError("All bitstrings must be of the same length.")
+    # Makes sure all matrices are of the same length
+    for matrix in matrices:
+        if len(matrix) != num_target_qubits:
+            raise ValueError("All matrices must be of the same length.")
 
     if num_of_elements == 1:
         num_ctrl_qubits = 1
@@ -45,7 +37,7 @@ def generate_qrom_circuit(bitstrings):
     circuit = cirq.Circuit()
 
     # Use multi-controlled X gates to set the target qubits based on the control qubits
-    for index, bitstring in enumerate(bitstrings):
+    for index, matrix in enumerate(matrices):
         part_circuit = cirq.Circuit()
         i_in_binary = bin(index)[2:].zfill(num_ctrl_qubits) 
 
@@ -55,11 +47,9 @@ def generate_qrom_circuit(bitstrings):
                 part_circuit.append(cirq.X(ctrl_reg[i]))
 
         #Setting target bits
-        for target_i, target_bit in enumerate(bitstring):
-                if target_bit in gates:
-                    part_circuit.append(gates[target_bit](trgt_reg[target_i]).controlled_by(*ctrl_reg))
-                else:
-                    raise ValueError(f"Invalid Pauli operator: {target_bit}")
+        for target_i, target_bit in enumerate(matrices):
+            print(f"Target bit matrix for index {index}, target qubit {target_i}:\n{target_bit}")
+            part_circuit.append(cirq.MatrixGate(target_bit).controlled(ctrl_reg[i]))
                 
         #Removing anti-controls
         for i, bit in enumerate(i_in_binary):
@@ -91,6 +81,9 @@ if __name__ == "__main__":
                 break
         else:
             current_rows.append([complex(x) for x in line.split()])
+    print("Input Matrices:")
+    for matrix in matrices:
+        print(matrix)
     qrom_circuit = generate_qrom_circuit(matrices)
     print("Generated QROM Circuit:")
     print(qrom_circuit)
