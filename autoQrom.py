@@ -6,13 +6,6 @@ import math
 import numpy as np
 
 
-def tensor_product(matrices):
-    result = matrices[0]
-    for matrix in matrices[1:]:
-        result = np.kron(result, matrix)
-    return result
-
-
 def _validate_square_power_of_two(matrix, index):
     if matrix.ndim != 2:
         raise ValueError(f"Matrix {index} must be 2-dimensional.")
@@ -43,7 +36,7 @@ def generate_qrom_circuit(matrices):
             raise ValueError("All matrices must be the same shape.")
 
     if num_of_elements == 1:
-        num_ctrl_qubits = 0
+        num_ctrl_qubits = 1
     else:
         num_ctrl_qubits = math.ceil(math.log(num_of_elements, 2))
 
@@ -57,10 +50,8 @@ def generate_qrom_circuit(matrices):
     # Use multi-controlled gates to set the target qubits based on the control qubits
     for index, matrix in enumerate(matrices):
         part_circuit = cirq.Circuit()
-        if num_ctrl_qubits > 0:
-            i_in_binary = bin(index)[2:].zfill(num_ctrl_qubits)
-        else:
-            i_in_binary = ""
+        i_in_binary = bin(index)[2:].zfill(num_ctrl_qubits)
+
 
         #Creating anti-controls
         for i, bit in enumerate(i_in_binary):
@@ -70,10 +61,8 @@ def generate_qrom_circuit(matrices):
         #Setting target bits
         print(f"Target matrix for index {index}:\n{matrix}")
         matrix_gate = cirq.MatrixGate(matrix)
-        if num_ctrl_qubits > 0:
-            part_circuit.append(matrix_gate.on(*trgt_reg).controlled_by(*ctrl_reg))
-        else:
-            part_circuit.append(matrix_gate.on(*trgt_reg))
+        part_circuit.append(matrix_gate.on(*trgt_reg).controlled_by(*ctrl_reg))
+
                 
         #Removing anti-controls
         for i, bit in enumerate(i_in_binary):
@@ -92,6 +81,7 @@ if __name__ == "__main__":
 
     matrices = []
     current_rows = []
+    last_combined_index = 0
 
     while True:
         line = input().strip()
@@ -102,7 +92,22 @@ if __name__ == "__main__":
                 matrices.append(np.array(current_rows, dtype=complex))
                 current_rows = []
             else:
-                break
+                new_matrices_count = len(matrices) - last_combined_index
+                if len(matrices) > 1:
+                    print("Do you want to combine all of the current matrices in the list? (y/n): ")
+                    finish = input().strip().lower()
+                    if finish == 'y':
+                        combined_matrix = matrices[last_combined_index]
+                        for matrix in matrices[last_combined_index + 1:]:
+                            combined_matrix = np.kron(combined_matrix, matrix)
+                        matrices = matrices[:last_combined_index]  # Keep old combined matrices
+                        matrices.append(combined_matrix)  # Add new combined matrix
+                        last_combined_index = len(matrices)  # Update the index
+
+                        print("Combined matrix added to the list.")
+                        continue
+                    else:
+                        break
         else:
             current_rows.append([complex(x) for x in line.split()])
     print("Input Matrices:")
