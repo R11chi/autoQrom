@@ -13,21 +13,39 @@ def tensor_product(matrices):
     return result
 
 
+def _validate_square_power_of_two(matrix, index):
+    if matrix.ndim != 2:
+        raise ValueError(f"Matrix {index} must be 2-dimensional.")
+    if matrix.shape[0] != matrix.shape[1]:
+        raise ValueError(f"Matrix {index} must be square.")
+    dim = matrix.shape[0]
+    if dim == 0 or (dim & (dim - 1)) != 0:
+        raise ValueError(
+            f"Matrix {index} dimension must be a power of two, got {dim}."
+        )
+    return dim
+
+
 def generate_qrom_circuit(matrices):
+    if not matrices:
+        raise ValueError("At least one matrix must be provided.")
+
     num_of_elements = len(matrices)
-    num_target_qubits = len(matrices[0]) 
+    dim = _validate_square_power_of_two(matrices[0], 0)
+    num_target_qubits = int(math.log2(dim))
 
     print(f"Number of elements: {num_of_elements}")
 
-    # Makes sure all matrices are of the same length
-    for matrix in matrices:
-        if len(matrix) != num_target_qubits:
-            raise ValueError("All matrices must be of the same length.")
+    # Makes sure all matrices are the same shape and valid
+    for index, matrix in enumerate(matrices):
+        matrix_dim = _validate_square_power_of_two(matrix, index)
+        if matrix_dim != dim:
+            raise ValueError("All matrices must be the same shape.")
 
     if num_of_elements == 1:
-        num_ctrl_qubits = 1
-    else:    
-        num_ctrl_qubits =  math.ceil(math.log(num_of_elements, 2))
+        num_ctrl_qubits = 0
+    else:
+        num_ctrl_qubits = math.ceil(math.log(num_of_elements, 2))
 
     print(f"Number of control qubits: {num_ctrl_qubits}")
 
@@ -36,10 +54,13 @@ def generate_qrom_circuit(matrices):
     
     circuit = cirq.Circuit()
 
-    # Use multi-controlled X gates to set the target qubits based on the control qubits
+    # Use multi-controlled gates to set the target qubits based on the control qubits
     for index, matrix in enumerate(matrices):
         part_circuit = cirq.Circuit()
-        i_in_binary = bin(index)[2:].zfill(num_ctrl_qubits) 
+        if num_ctrl_qubits > 0:
+            i_in_binary = bin(index)[2:].zfill(num_ctrl_qubits)
+        else:
+            i_in_binary = ""
 
         #Creating anti-controls
         for i, bit in enumerate(i_in_binary):
@@ -47,9 +68,12 @@ def generate_qrom_circuit(matrices):
                 part_circuit.append(cirq.X(ctrl_reg[i]))
 
         #Setting target bits
-        for target_i, target_bit in enumerate(matrices):
-            print(f"Target bit matrix for index {index}, target qubit {target_i}:\n{target_bit}")
-            part_circuit.append(cirq.MatrixGate(target_bit).controlled(ctrl_reg[i]))
+        print(f"Target matrix for index {index}:\n{matrix}")
+        matrix_gate = cirq.MatrixGate(matrix)
+        if num_ctrl_qubits > 0:
+            part_circuit.append(matrix_gate.on(*trgt_reg).controlled_by(*ctrl_reg))
+        else:
+            part_circuit.append(matrix_gate.on(*trgt_reg))
                 
         #Removing anti-controls
         for i, bit in enumerate(i_in_binary):

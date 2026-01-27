@@ -1,0 +1,18 @@
+QROM matrix input usage
+
+- Provide a list of numpy matrices, one per address entry.
+- Each matrix must be square with dimension 2**n (e.g., 2x2 for 1 target qubit).
+- The number of control qubits is ceil(log2(number of matrices)).
+- Each matrix is applied when the control register matches the binary index:
+  - bit 0 -> anti-control (X) on that control line
+  - bit 1 -> normal control
+
+Example (3 matrices -> 2 control qubits, 1 target qubit):
+
+matrices = [
+    np.array([[1, 0], [0, 1]], dtype=complex),  # index 0 -> controls 00
+    np.array([[0, 1], [1, 0]], dtype=complex),  # index 1 -> controls 01
+    np.array([[1, 0], [0, -1]], dtype=complex), # index 2 -> controls 10
+]
+
+qrom_circuit = generate_qrom_circuit(matrices)
