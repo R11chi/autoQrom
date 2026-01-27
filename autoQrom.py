@@ -6,6 +6,14 @@ import math
 import numpy as np
 
 
+def tensor_product(matrices):
+    result = matrices[0]
+    for matrix in matrices[1:]:
+        result = np.kron(result, matrix)
+    return result
+
+
+
 gates = {
     "X": cirq.X,
     "Y": cirq.Y,
@@ -66,8 +74,23 @@ def generate_qrom_circuit(bitstrings):
 
 
 if __name__ == "__main__":
-    user_input = input("Enter Pauli strings (X, Y, Z, I)^* separated by commas: ").strip()
-    bitstrings = [bs.strip() for bs in user_input.split(",") if bs.strip()]
-    qrom_circuit = generate_qrom_circuit(bitstrings)
+    print("Enter matrices (blank line to separate, double blank to finish):")
+
+    matrices = []
+    current_rows = []
+
+    while True:
+        line = input().strip()
+
+        # Double blank line → finish
+        if line == "":
+            if current_rows:
+                matrices.append(np.array(current_rows, dtype=complex))
+                current_rows = []
+            else:
+                break
+        else:
+            current_rows.append([complex(x) for x in line.split()])
+    qrom_circuit = generate_qrom_circuit(matrices)
     print("Generated QROM Circuit:")
     print(qrom_circuit)
