@@ -4,6 +4,7 @@
 import cirq
 import math
 import numpy as np
+import json
 
 
 def _validate_square_power_of_two(matrix, index):
@@ -75,8 +76,13 @@ def generate_qrom_circuit(matrices):
     return circuit
 
 
+def load_matrices_from_json(file_path):
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    matrices = [np.array(matrix, dtype=complex) for matrix in data['matrices']]
+    return matrices
 
-if __name__ == "__main__":
+def load_matrices_from_input():
     print("Enter matrices (blank line to separate, double blank to finish):")
 
     matrices = []
@@ -110,9 +116,15 @@ if __name__ == "__main__":
                         break
         else:
             current_rows.append([complex(x) for x in line.split()])
+    return matrices
+
+
+if __name__ == "__main__":
+    matrices = load_matrices_from_input()
     print("Input Matrices:")
     for matrix in matrices:
         print(matrix)
     qrom_circuit = generate_qrom_circuit(matrices)
     print("Generated QROM Circuit:")
     print(qrom_circuit)
+
